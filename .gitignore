@@ -1,0 +1,23 @@
+# Machine-learning training images (large local dataset)
+chess-python-backend/Brand_new_augmented_chess_dataset/
+
+# Generated screenshots and cropped board squares
+chess-python-backend/identify/
+chess-python-backend/identif/
+
+# JavaScript dependencies and generated frontend output
+**/node_modules/
+chess-ai/build/
+coverage/
+
+# Local configuration and runtime logs
+.env
+.env.*
+!.env.example
+*.log
+
+# Python bytecode and virtual environments
+**/__pycache__/
+*.py[cod]
+.venv/
+venv/

@@ -21,3 +21,7 @@ coverage/
 *.py[cod]
 .venv/
 venv/
+
+# Stockfish binary (download separately, see README)
+stockfish/stockfish*
+!stockfish/*.py

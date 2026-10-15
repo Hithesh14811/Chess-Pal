@@ -2,7 +2,6 @@ import cv2
 import numpy as np
 import os
 import shutil
-import pyautogui
 import mss
 import mss.tools
 from flask import Flask, request, jsonify
@@ -334,8 +333,10 @@ def capture_and_process_board():
 def analyze_board():
     """Analyze board with clean image storage"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         ai_color = data.get('aiColor', 'white')
+        if ai_color not in ('white', 'black'):
+            return jsonify({"error": "aiColor must be 'white' or 'black'"}), 400
         logger.info(f"Starting board analysis with AI color: {ai_color}")
         
         # Clean folder before processing

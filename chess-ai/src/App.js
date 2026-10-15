@@ -132,8 +132,6 @@ function App() {
         body: JSON.stringify({
           fen: game.fen(),
           checkmateEnabled,
-          analyzerMode: false,
-          moveCount: Math.floor(game.history().length / 2),
         }),
       });
       if (!response.ok) throw new Error(`AI service returned ${response.status}`);
@@ -205,7 +203,11 @@ function App() {
   const startGame = () => {
     try {
       const activeColor = gameMode === "default" ? "white" : (firstMover === "ai" ? aiColor : playerColor);
-      const game = new Chess(positionToFen(setupPosition, activeColor[0]));
+      // The standard start position keeps its castling rights; for custom
+      // setups they can't be known, so positionToFen marks them unavailable.
+      const game = gameMode === "default"
+        ? new Chess()
+        : new Chess(positionToFen(setupPosition, activeColor[0]));
       gameRef.current = game;
       setBoardPosition(game.fen());
       setMoveHistory([]);

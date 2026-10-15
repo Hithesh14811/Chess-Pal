@@ -1,30 +1,35 @@
 import os
+import shutil
 import subprocess
 import tkinter as tk
 from tkinter import messagebox, ttk
 
 
 def resolve_stockfish_path():
-    """Locate the Stockfish binary relative to this script, or via STOCKFISH_PATH."""
+    """Locate Stockfish via STOCKFISH_PATH, next to this script, or on PATH."""
     env_path = os.environ.get("STOCKFISH_PATH")
     if env_path:
         return env_path
 
     here = os.path.dirname(os.path.abspath(__file__))
     candidates = [
-        os.path.join(here, "stockfish", "stockfish-windows-x86-64-avx2.exe"),
-        os.path.join(here, "..", "stockfish-windows-x86-64-avx2.exe"),
+        os.path.join(here, "stockfish-windows-x86-64-avx2.exe"),
+        os.path.join(here, "stockfish.exe"),
+        os.path.join(here, "stockfish"),
     ]
     for candidate in candidates:
         if os.path.exists(candidate):
             return candidate
+    on_path = shutil.which("stockfish")
+    if on_path:
+        return on_path
     raise FileNotFoundError(
         "Stockfish binary not found. Set the STOCKFISH_PATH environment "
         "variable to point to a stockfish executable."
     )
 
 
-class ZiffieChessTool:
+class ChessPalTool:
     # (label, FEN letter). Uppercase = White, lowercase = Black.
     PIECES = [
         ("♔ King", "K"),
@@ -37,7 +42,7 @@ class ZiffieChessTool:
 
     def __init__(self, root):
         self.root = root
-        self.root.title("Ziffie Chess Strategy Tool")
+        self.root.title("Chess Pal Strategy Tool")
 
         self.board = [["" for _ in range(8)] for _ in range(8)]
         self.buttons = []
@@ -218,7 +223,7 @@ class ZiffieChessTool:
 if __name__ == "__main__":
     try:
         root = tk.Tk()
-        app = ZiffieChessTool(root)
+        app = ChessPalTool(root)
         root.mainloop()
     except FileNotFoundError as e:
         messagebox.showerror("Setup error", str(e))

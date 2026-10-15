@@ -13,7 +13,10 @@ warnings.filterwarnings('ignore')
 
 # ULTRA-OPTIMIZED CONFIGURATION
 class UltraConfig:
-    DATA_PATH = r"C:\Users\hithe\OneDrive\Desktop\ziffie_chess\chess-python-backend\Brand_new_augmented_chess_dataset"
+    DATA_PATH = os.environ.get(
+        "CHESS_DATASET_PATH",
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "Brand_new_augmented_chess_dataset"),
+    )
     IMG_SIZE = 64  # Smallest viable size for 90%+ accuracy
     BATCH_SIZE = 64  # Larger batches = faster training
     NUM_EPOCHS = 35  # Smart early stopping

@@ -1,23 +1,36 @@
 const express = require("express");
 const cors = require("cors");
-const bodyParser = require("body-parser");
 const { spawn } = require("child_process");
 const path = require("path");
 const fs = require("fs");
 
 // Resolve the Stockfish binary. Priority:
 //   1. STOCKFISH_PATH environment variable
-//   2. ../stockfish-windows-x86-64-avx2.exe (project root, current location)
-//   3. ../stockfish/stockfish/stockfish-windows-x86-64-avx2.exe (vendored copy)
+//   2. A binary placed in ../stockfish/ (see README)
+//   3. `stockfish` on the system PATH
+function findOnPath(name) {
+  const exts = process.platform === "win32" ? [".exe", ""] : [""];
+  for (const dir of (process.env.PATH || "").split(path.delimiter)) {
+    if (!dir) continue;
+    for (const ext of exts) {
+      const candidate = path.join(dir, name + ext);
+      if (fs.existsSync(candidate)) return candidate;
+    }
+  }
+  return null;
+}
+
 function resolveStockfishPath() {
   if (process.env.STOCKFISH_PATH) {
     return process.env.STOCKFISH_PATH;
   }
+  const dir = path.join(__dirname, "..", "stockfish");
   const candidates = [
-    path.join(__dirname, "..", "stockfish-windows-x86-64-avx2.exe"),
-    path.join(__dirname, "..", "stockfish", "stockfish", "stockfish-windows-x86-64-avx2.exe"),
+    path.join(dir, "stockfish-windows-x86-64-avx2.exe"),
+    path.join(dir, "stockfish.exe"),
+    path.join(dir, "stockfish"),
   ];
-  const found = candidates.find((p) => fs.existsSync(p));
+  const found = candidates.find((p) => fs.existsSync(p)) || findOnPath("stockfish");
   if (!found) {
     console.error(
       "Stockfish binary not found. Set the STOCKFISH_PATH environment variable to point to a stockfish executable."
@@ -31,37 +44,30 @@ function resolveStockfishPath() {
 const STOCKFISH_PATH = resolveStockfishPath();
 const PORT = Number(process.env.PORT) || 5000;
 const SEARCH_TIMEOUT_MS = Number(process.env.SEARCH_TIMEOUT_MS) || 120000;
+const DEFAULT_DEPTH = Number(process.env.SEARCH_DEPTH) || 12;
+const DEEP_SEARCH_DEPTH = Number(process.env.DEEP_SEARCH_DEPTH) || 18;
+const FEN_PATTERN = /^[pnbrqkPNBRQK1-8\/]+ [wb] (-|[KQkq]{1,4}) (-|[a-h][36]) \d+ \d+$/;
 
 const app = express();
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
 
 app.get("/health", (req, res) => {
   res.json({ status: "ok", stockfish: STOCKFISH_PATH });
 });
 
 app.post("/best-move", (req, res) => {
-  const fen = req.body.fen;
+  const fen = typeof req.body?.fen === "string" ? req.body.fen.trim() : "";
   if (!fen) {
     return res.status(400).json({ error: "Missing 'fen' field" });
   }
-
-  const checkmateEnabled = req.body.checkmateEnabled || false;
-  const analyzerMode = req.body.analyzerMode || false;
-  const moveCount = req.body.moveCount || 0;
-
-  let depth;
-  if (checkmateEnabled) {
-    depth = 15;
-  } else if (analyzerMode) {
-    // Depths for when analyzerMode is ON
-    const depths = [12, 10, 8, 6, 5, 4, 3];
-    depth = moveCount < depths.length ? depths[moveCount] : 2; // Minimum depth set to 2
-  } else {
-    // Depths for when analyzerMode is OFF
-    const depths = [11, 9, 7, 5, 4, 3];
-    depth = moveCount < depths.length ? depths[moveCount] : 2; // Minimum depth set to 2
+  // The FEN is written straight into the engine's stdin, so only accept
+  // well-formed FEN (no newlines that could inject extra UCI commands).
+  if (!FEN_PATTERN.test(fen)) {
+    return res.status(400).json({ error: "Invalid FEN" });
   }
+
+  const depth = req.body.checkmateEnabled ? DEEP_SEARCH_DEPTH : DEFAULT_DEPTH;
 
   let stockfish;
   let settled = false;

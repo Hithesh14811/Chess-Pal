@@ -1,6 +1,8 @@
+# The bundled model was saved with Keras 3.9; newer Keras versions fail to load it
+tensorflow==2.19.0
+keras==3.9.2
 flask
 flask-cors
 opencv-python
 numpy
 mss
-tensorflow

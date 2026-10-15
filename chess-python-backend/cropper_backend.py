@@ -30,11 +30,8 @@ Path(PIECES_FOLDER).mkdir(parents=True, exist_ok=True)
 # Load the machine learning model with optimizations
 MODEL_CANDIDATES = [
     os.path.join(BASE_DIR, "chess_model_efficientnet_best2.keras"),
-    os.path.join(BASE_DIR, "chess_model_efficientnet_best2"),
-    os.path.join(BASE_DIR, "chess_model_efficientnet_final2.keras"),
-    os.path.join(BASE_DIR, "chess_model_improved.keras"),
-    os.path.join(BASE_DIR, "chess_model_improved.h5"),
-    os.path.join(BASE_DIR, "models"),
+    # Output of train_efficientnet.py
+    os.path.join(BASE_DIR, "chess_model_efficientnet_trained.keras"),
 ]
 MODEL_PATH = next((p for p in MODEL_CANDIDATES if os.path.exists(p)), None)
 if MODEL_PATH is None:
